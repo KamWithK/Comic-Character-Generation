@@ -1,0 +1,15 @@
+name: charactergen
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - jupyter
+  - jupyterlab
+  - ipywidgets
+  - pylint
+  - rope
+  - nodejs
+  - pillow
+  - pip
+  - pip:
+    - scrapy
