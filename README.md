@@ -3,7 +3,7 @@
 Lionel Polanski is such an enigma (and nonetheless, a very cool name)
 
 ## Instalation and Environment
-To simplify running code in a stable and consistant environement, please we provide an `environment.yaml` file.
+To simplify running code in a stable and consistant environment, please we provide an `environment.yaml` file.
 This file contains a list of essential packages (which certain version and channel specifications).
 It is easiest to use the environment with Anaconda (or Miniconda for a smaller and more streamlined environment).
 
