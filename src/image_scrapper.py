@@ -4,10 +4,10 @@ from spider import SuperheroSpider, PDSHSpider
 process = CrawlerProcess(settings={
     "COOKIES_ENABLED": "False",
     "LOG_LEVEL": "WARNING",
-    "ITEM_PIPELINES": {"scrapy.pipelines.images.ImagesPipeline": 1},
+    "ITEM_PIPELINES": {"image_pipeline.MultiDatasetPipeline": 1},
     "IMAGES_STORE": "data"
 })
 
-# process.crawl(SuperheroSpider)
+process.crawl(SuperheroSpider)
 process.crawl(PDSHSpider)
 process.start()
