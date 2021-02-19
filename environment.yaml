@@ -1,5 +1,6 @@
 name: charactergen
 channels:
+  - fastai
   - pytorch
   - conda-forge
   - defaults
@@ -14,4 +15,9 @@ dependencies:
   - scrapy
   - pytorch>=1.7.1
   - torchvision
+  - fastai>=2.2.5
   - matplotlib
+  - wandb
+  - pip
+  - pip:
+    - pytorch-lightning
