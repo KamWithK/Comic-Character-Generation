@@ -1,5 +1,6 @@
 name: charactergen
 channels:
+  - pytorch
   - conda-forge
   - defaults
 dependencies:
@@ -11,3 +12,6 @@ dependencies:
   - nodejs
   - pillow
   - scrapy
+  - pytorch>=1.7.1
+  - torchvision
+  - matplotlib
