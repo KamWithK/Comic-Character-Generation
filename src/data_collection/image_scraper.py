@@ -1,5 +1,5 @@
 from scrapy.crawler import CrawlerProcess
-from spider import SuperheroSpider, PDSHSpider
+from spider import SuperheroSpider, PDSHSpider, MarvelSpider
 
 process = CrawlerProcess(settings={
     "COOKIES_ENABLED": "False",
@@ -10,4 +10,5 @@ process = CrawlerProcess(settings={
 
 process.crawl(SuperheroSpider)
 process.crawl(PDSHSpider)
+process.crawl(MarvelSpider)
 process.start()

@@ -1,6 +1,7 @@
 import scrapy
+import re
 
-from scrapy.spiders import CrawlSpider, Rule
+from scrapy.spiders import CrawlSpider, XMLFeedSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
 class SuperheroSpider(CrawlSpider):
@@ -23,3 +24,19 @@ class PDSHSpider(CrawlSpider):
     def parse(self, response):
         image_urls = [url.split("/revision")[0] for url in response.css(".category-page__member-thumbnail::attr(src)").getall()]
         yield {"image_urls": image_urls}
+
+class MarvelSpider(XMLFeedSpider):
+    name = "marvel"
+    start_urls = [
+        "https://www.marvel.com/sitemap-8.xml",
+        "https://www.marvel.com/sitemap-9.xml",
+        "https://www.marvel.com/sitemap-10.xml",
+        "https://www.marvel.com/sitemap-11.xml"
+    ]
+    itertag = 'url'
+
+    def parse_node(self, response, node):
+        character_url_search = re.search("https://www.marvel.com/characters/", node.extract())
+        image_url_search = re.search("https:\/\/terrigen-cdn-dev\.marvel\.com\/content\/prod\/2x\/.*?\.(?:jpg|png)", node.extract())
+        if character_url_search and image_url_search:
+            yield {"image_urls": [image_url_search.group(0)]}
