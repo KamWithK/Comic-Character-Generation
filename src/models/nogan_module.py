@@ -20,7 +20,6 @@ class NoGANModule(LightningModule):
         # Presetting previous batch to generator, forces first batch to train discriminator
         # Only when pretraining isn't used
         self.pretrain_generator, self.pretrain_discriminator = hparams["pretrain_generator"], hparams["pretrain_discriminator"]
-        self.generator_loss = None
 
         hparams.update({
             "generator_criterion": FeatureLoss.__class__.__name__,
@@ -54,7 +53,7 @@ class NoGANModule(LightningModule):
     def on_train_batch_start(self, batch, batch_idx, dataloader_idx):
         if self.pretrain_generator == 0 and self.pretrain_discriminator == 0:
             # Update discriminator loss if training the generator
-            if self.train_stage == "generator":
+            if self.train_stage == "generator" or "discriminator_loss" not in self.__dict__:
                 self.discriminator_loss = self.hparams["loss_threshold"]
             
             # Switch modes to generator if discriminator is trained enough
@@ -92,7 +91,7 @@ class NoGANModule(LightningModule):
 
         # Use the right optimizer
         optimizer = self.optimizers()[0] if self.train_stage == "generator" else self.optimizers()[1]
-        
+
         # Train generator
         def generator_closure():
             losses = {
@@ -100,6 +99,7 @@ class NoGANModule(LightningModule):
                 "pixel_loss": self.pixel_loss(gen_outputs, imgs),
                 "feature_loss": self.feature_loss(gen_outputs, imgs)
             }
+            self.generator_loss = losses["generator_loss"]
 
             if self.pretrain_generator != 0:
                 losses["adversarial_loss"] = self.discriminator_criterion(self.discriminator(gen_outputs), real)
@@ -120,12 +120,13 @@ class NoGANModule(LightningModule):
                 "fake_loss": self.discriminator_criterion(self.discriminator(gen_outputs.detach()), fake)
             }
 
-            losses["discriminator_loss"] = losses["real_loss"] + losses["fake_loss"]
+            self.discriminator_loss = losses["real_loss"] + losses["fake_loss"]
+            losses["discriminator_loss"] = self.discriminator_loss
 
             # Return the total and individual losses
             self.log_dict(losses, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
-            self.manual_backward(self.discriminator_loss, optimizer)
+            self.manual_backward(losses["discriminator_loss"], optimizer)
 
             if accumulated_grad_batches:
                 optimizer.zero_grad()
