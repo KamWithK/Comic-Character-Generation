@@ -4,15 +4,17 @@ from pytorch_lightning import LightningModule
 from torch.optim import Adam
 from torch.nn import MSELoss, BCEWithLogitsLoss
 from torch.optim.lr_scheduler import ExponentialLR
+from utils.feature_loss import FeatureLoss
 
 class NoGANModule(LightningModule):
-    def __init__(self, generator=None, discriminator=None, generator_criterion=MSELoss(), discriminator_criterion=BCEWithLogitsLoss(), hparams={"loss_threshold": 0.2, "pixel_scale": 100, "pretrain_generator": 0, "pretrain_discriminator": 0}):
+    def __init__(self, generator=None, discriminator=None, discriminator_criterion=BCEWithLogitsLoss(), hparams={"loss_threshold": 0.2, "pretrain_generator": 0, "pretrain_discriminator": 0}):
         super().__init__()
 
         hparams = dict(hparams)
         self.generator, self.discriminator, = generator, discriminator
 
-        self.generator_criterion = generator_criterion
+        self.feature_loss = FeatureLoss()
+        self.pixel_loss = MSELoss()
         self.discriminator_criterion = discriminator_criterion
 
         # Presetting previous batch to generator, forces first batch to train discriminator
@@ -21,7 +23,7 @@ class NoGANModule(LightningModule):
         self.generator_loss = None
 
         hparams.update({
-            "generator_criterion": generator_criterion.__class__.__name__,
+            "generator_criterion": FeatureLoss.__class__.__name__,
             "discriminator_criterion": discriminator_criterion.__class__.__name__
         })
 
@@ -93,37 +95,35 @@ class NoGANModule(LightningModule):
         
         # Train generator
         def generator_closure():
-            adversarial_loss = self.discriminator_criterion(self.discriminator(gen_outputs), real)
-            pixel_loss = self.generator_criterion(gen_outputs, imgs)
+            losses = {
+                "generator_loss": self.feature_loss(gen_outputs, imgs),
+                "pixel_loss": self.pixel_loss(gen_outputs, imgs),
+                "feature_loss": self.feature_loss(gen_outputs, imgs)
+            }
 
-            self.generator_loss = adversarial_loss + self.hparams["pixel_scale"] * pixel_loss
+            if self.pretrain_generator != 0:
+                losses["adversarial_loss"] = self.discriminator_criterion(self.discriminator(gen_outputs), real)
+                losses["generator_loss"] += losses["adversarial_loss"]
 
             # Return the total and individual losses
-            self.log_dict({
-                "generator_loss": self.generator_loss,
-                "adversarial_loss": adversarial_loss,
-                "pixel_loss": pixel_loss,
-                "scaled_pixel_loss": self.hparams["pixel_scale"] * pixel_loss
-            }, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            self.log_dict(losses, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
-            self.manual_backward(self.generator_loss, optimizer)
+            self.manual_backward(losses["generator_loss"], optimizer)
 
             if accumulated_grad_batches:
                 optimizer.zero_grad()
         
         # Train discriminator
         def discriminator_closure():
-            real_loss = self.discriminator_criterion(self.discriminator(imgs), real)
-            fake_loss = self.discriminator_criterion(self.discriminator(gen_outputs), fake)
+            losses = {
+                "real_loss": self.discriminator_criterion(self.discriminator(imgs), real),
+                "fake_loss": self.discriminator_criterion(self.discriminator(gen_outputs.detach()), fake)
+            }
 
-            self.discriminator_loss = real_loss + fake_loss
+            losses["discriminator_loss"] = losses["real_loss"] + losses["fake_loss"]
 
             # Return the total and individual losses
-            self.log_dict({
-                "discriminator_loss": self.discriminator_loss,
-                "real_loss": real_loss,
-                "fake_loss": fake_loss
-            }, on_step=False, on_epoch=True, prog_bar=True, logger=True)
+            self.log_dict(losses, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
             self.manual_backward(self.discriminator_loss, optimizer)
 
@@ -140,6 +140,5 @@ class NoGANModule(LightningModule):
         imgs, _ = batch
         noise = torch.randn_like(imgs, device=self.device)
         gen_outputs = self.forward(noise)
-        pixel_loss = self.generator_criterion(gen_outputs, imgs)
         
-        return pixel_loss
+        return self.feature_loss(gen_outputs, imgs)
