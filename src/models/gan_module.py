@@ -4,20 +4,22 @@ from pytorch_lightning import LightningModule
 from torch import optim
 from torch.optim import Adam
 from torch.nn import MSELoss, BCEWithLogitsLoss
+from utils.feature_loss import FeatureLoss
 from torch.optim.lr_scheduler import ExponentialLR
 
 class GANModule(LightningModule):
-    def __init__(self, generator=None, discriminator=None, generator_criterion=MSELoss(), discriminator_criterion=BCEWithLogitsLoss(), hparams={"pixel_scale": 100}):
+    def __init__(self, generator=None, discriminator=None, discriminator_criterion=BCEWithLogitsLoss(), hparams={"pixel_scale": 100, "feature_scale": 100}):
         super().__init__()
 
         hparams = dict(hparams)
         self.generator, self.discriminator, = generator, discriminator
 
-        self.generator_criterion = generator_criterion
+        self.feature_loss = FeatureLoss()
+        self.pixel_loss = MSELoss()
         self.discriminator_criterion = discriminator_criterion
 
         hparams.update({
-            "generator_criterion": generator_criterion.__class__.__name__,
+            "generator_criterion": FeatureLoss().__class__.__name__,
             "discriminator_criterion": discriminator_criterion.__class__.__name__
         })
 
@@ -59,16 +61,19 @@ class GANModule(LightningModule):
         # Train generator
         def generator_closure():
             adversarial_loss = self.discriminator_criterion(self.discriminator(gen_outputs), real)
-            pixel_loss = self.generator_criterion(gen_outputs, imgs)
+            pixel_loss = self.pixel_loss(gen_outputs, imgs)
+            feature_loss = self.feature_loss(gen_outputs, imgs)
 
-            self.generator_loss = adversarial_loss + self.hparams["pixel_scale"] * pixel_loss
+            self.generator_loss = adversarial_loss + self.hparams["feature_scale"] * feature_loss
 
             # Return the total and individual losses
             self.log_dict({
                 "generator_loss": self.generator_loss,
                 "adversarial_loss": adversarial_loss,
                 "pixel_loss": pixel_loss,
-                "scaled_pixel_loss": self.hparams["pixel_scale"] * pixel_loss
+                "feature_loss": feature_loss,
+                "scaled_pixel_loss": self.hparams["pixel_scale"] * pixel_loss,
+                "scaled_feature_loss": self.hparams["feature_scale"] * feature_loss
             }, on_step=False, on_epoch=True, prog_bar=True, logger=True)
 
             self.manual_backward(self.generator_loss, generator_optimizer)
@@ -108,6 +113,6 @@ class GANModule(LightningModule):
         imgs, _ = batch
         noise = torch.randn_like(imgs, device=self.device)
         gen_outputs = self.forward(noise)
-        pixel_loss = self.generator_criterion(gen_outputs, imgs)
+        pixel_loss = self.feature_loss(gen_outputs, imgs)
         
         return pixel_loss
