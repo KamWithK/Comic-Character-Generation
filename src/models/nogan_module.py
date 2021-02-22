@@ -101,7 +101,7 @@ class NoGANModule(LightningModule):
             }
             self.generator_loss = losses["generator_loss"]
 
-            if self.pretrain_generator != 0:
+            if self.pretrain_generator == 0:
                 losses["adversarial_loss"] = self.discriminator_criterion(self.discriminator(gen_outputs), real)
                 losses["generator_loss"] += losses["adversarial_loss"]
 
