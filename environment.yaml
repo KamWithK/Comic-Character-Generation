@@ -18,6 +18,3 @@ dependencies:
   - fastai>=2.2.5
   - matplotlib
   - wandb
-  - pip
-  - pip:
-    - pytorch-lightning

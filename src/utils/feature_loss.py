@@ -6,7 +6,7 @@ from torchvision import models
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Modified version of https://github.com/jantic/DeOldify/blob/master/deoldify/loss.py
+# Source: https://github.com/jantic/DeOldify/blob/master/deoldify/loss.py
 class FeatureLoss(nn.Module):
     def __init__(self, layer_wgts=[20, 70, 10]):
         super().__init__()
@@ -41,10 +41,6 @@ class FeatureLoss(nn.Module):
 
         self.metrics = dict(zip(self.metric_names, self.feat_losses))
         return sum(self.feat_losses)
-
-    # Failsafe for PyTorch Lightning
-    def train(self, mode: bool):
-        return super().train(False)
 
     def __del__(self):
         self.hooks.remove()
