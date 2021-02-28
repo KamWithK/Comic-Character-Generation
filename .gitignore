@@ -3,3 +3,5 @@ data/*
 __pycache__
 **wandb/
 **lightning_logs
+notebooks/.ipynb_checkpoints
+wandb/
