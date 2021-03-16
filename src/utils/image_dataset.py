@@ -17,5 +17,8 @@ class ImageDataset(Dataset):
     def __getitem__(self, index):
         img = Image.open(self.paths[index]).convert("RGB")
         img = self.transform(img)# if self.transform != None else transforms.ToTensor()(img)
-
-        return img if None in [self.size, self.latent_vector] else randn(self.latent_vector, self.size, self.size), img
+        
+        if None in [self.size, self.latent_vector]:
+            return img
+        else:
+            return randn(self.latent_vector, self.size, self.size), img
