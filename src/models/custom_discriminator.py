@@ -16,7 +16,7 @@ class Discriminator(nn.Module):
         self.final_layer = nn.Sequential(
             SelfAttention(hidden_dims[-1]),
             nn.Conv2d(hidden_dims[-1], 1, final_conv_kernel),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
         
     def block(self, in_channels, out_channels):
@@ -29,7 +29,7 @@ class Discriminator(nn.Module):
             # nn.BatchNorm2d(in_channels),
             # nn.LeakyReLU(),
             
-            nn.Conv2d(in_channels, out_channels=out_channels, kernel_size=3, stride=2, padding=1),
+            spectral_norm(nn.Conv2d(in_channels, out_channels=out_channels, kernel_size=3, stride=2, padding=1)),
             nn.BatchNorm2d(out_channels),
             nn.LeakyReLU()
         )
