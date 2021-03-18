@@ -9,9 +9,10 @@ class GANTrainer():
 
     def train_generator(self, noise, real_label):
         self.generator_optimiser.zero_grad()
-        generator_loss = self.criterion(self.discriminator(self.generator(noise)).view(-1), real_label)
-        generator_loss.backward()
 
+        generator_loss = self.criterion(self.discriminator(self.generator(noise)).view(-1), real_label)
+
+        generator_loss.backward()
         self.generator_optimiser.step()
 
         return generator_loss
@@ -23,5 +24,6 @@ class GANTrainer():
         fake_loss = self.criterion(self.discriminator(self.generator(noise).detach()).view(-1), fake_label)
 
         (real_loss + fake_loss).backward()
+        self.discriminator_optimiser.step()
 
         return real_loss, fake_loss
