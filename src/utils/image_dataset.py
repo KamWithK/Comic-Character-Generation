@@ -1,12 +1,12 @@
 from torch.utils.data import Dataset
 from PIL import Image
-from os import listdir
+from os import listdir, walk
+from os.path import join
 from torch import randn
 
 class ImageDataset(Dataset):
     def __init__(self, path="../data/superhero", transform=None, size=None, latent_vector=None):
-        self.paths = [f"{path}/{filename}" for filename in listdir(path)]
-        
+        self.paths = [join(folder, image_path) for folder, _, fn in walk(path) for image_path in fn]        
         self.transform = transform
         
         self.size, self.latent_vector = size, latent_vector
