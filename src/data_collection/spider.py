@@ -1,6 +1,7 @@
 import scrapy
 import re
 
+from scrapy import Spider
 from scrapy.spiders import CrawlSpider, XMLFeedSpider, Rule
 from scrapy.linkextractors import LinkExtractor
 
@@ -11,6 +12,15 @@ class SuperheroSpider(CrawlSpider):
 
     def parse(self, response):
         image_urls = [response.urljoin(image_link) for image_link in response.css(".wsite-image::attr(src)").getall()]
+        yield {"image_urls": image_urls}
+
+class DCSpider(Spider):
+    name = "dccomics"
+    start_urls = ["https://www.dccomics.com/proxy/search?type=generic_character"]
+
+    def parse(self, response):
+        superheros = response.json()["results"]
+        image_urls = [response.urljoin(superhero["fields"]["field_profile_picture:file:url"][0]) for superhero in superheros.values()]
         yield {"image_urls": image_urls}
 
 class PDSHSpider(CrawlSpider):
