@@ -12,26 +12,28 @@ class Generator(nn.Module):
         # Custom block support        
         if block != None: self.block = block
 
-        in_dims = [latent_dims] + hidden_dims[:-1]
-        self.main = nn.Sequential(*starmap(self.block, zip(in_dims, hidden_dims)))
+        in_dims = hidden_dims[:-1]
+        self.main = nn.Sequential(
+            nn.ConvTranspose2d(latent_dims, hidden_dims[0], kernel_size=4, stride=1),
+            *starmap(self.block, zip(in_dims, hidden_dims[1:]))
+        )
 
         # Correct output shape
         final_conv = shape_change_conv(self.main, in_size, out_size, latent_dims, out_channels)
         
         self.final_layer = nn.Sequential(
-            # SelfAttention(hidden_dims[-1]),
-            spectral_norm(final_conv),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(),
+            SelfAttention(hidden_dims[-1]),
+            final_conv,
             nn.Tanh()
         )
         
     def block(self, in_channels, out_channels):
         return nn.Sequential(
-            spectral_norm(nn.ConvTranspose2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1, output_padding=1)),
+            spectral_norm(nn.ConvTranspose2d(in_channels, out_channels, kernel_size=4, stride=2, padding=1)),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
         )
 
     def forward(self, input):
         return self.final_layer(self.main(input))
+        

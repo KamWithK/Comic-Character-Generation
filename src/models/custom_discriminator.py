@@ -19,15 +19,16 @@ class Discriminator(nn.Module):
         final_conv = shape_change_conv(self.main, in_size, 1, channels, 1)
         
         self.final_layer = nn.Sequential(
-            # SelfAttention(hidden_dims[-1]),
+            SelfAttention(hidden_dims[-1]),
             final_conv
         )
         
     def block(self, in_channels, out_channels):
         return nn.Sequential(
-            spectral_norm(nn.Conv2d(in_channels, out_channels=out_channels, kernel_size=3, stride=2, padding=1)),
+            spectral_norm(nn.Conv2d(in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1)),
             nn.LeakyReLU()
         )
 
     def forward(self, input):
         return self.final_layer(self.main(input))
+        
