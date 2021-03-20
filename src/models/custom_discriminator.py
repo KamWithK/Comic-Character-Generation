@@ -26,7 +26,7 @@ class Discriminator(nn.Module):
     def block(self, in_channels, out_channels):
         return nn.Sequential(
             spectral_norm(nn.Conv2d(in_channels, out_channels=out_channels, kernel_size=4, stride=2, padding=1)),
-            nn.LeakyReLU()
+            nn.LeakyReLU(0.2)
         )
 
     def forward(self, input):
