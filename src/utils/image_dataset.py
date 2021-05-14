@@ -1,13 +1,15 @@
 from torch.utils.data import Dataset
 from PIL import Image
-from os import listdir, walk
+from os import walk
 from os.path import join
 from torch import randn
 
 class ImageDataset(Dataset):
-    def __init__(self, path="../data/superhero", transform=None, size=None, latent_vector=None):
-        self.paths = [join(folder, image_path) for folder, _, fn in walk(path) for image_path in fn]        
+    def __init__(self, path="../data/superhero", max_images=None, transform=None, size=None, latent_vector=None):
+        self.all_paths = [join(folder, image_path) for folder, _, fn in walk(path) for image_path in fn]
         self.transform = transform
+
+        self.paths = self.all_paths if max_images == None else self.all_paths[:max_images]
         
         self.size, self.latent_vector = size, latent_vector
         
