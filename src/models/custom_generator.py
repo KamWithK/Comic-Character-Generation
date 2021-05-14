@@ -2,7 +2,6 @@ import torch.nn as nn
 
 from torch.nn.utils import spectral_norm
 from models.self_attention import SelfAttention
-from utils.find_size import shape_change_conv
 from itertools import starmap
 
 class Generator(nn.Module):
@@ -17,13 +16,9 @@ class Generator(nn.Module):
             nn.ConvTranspose2d(latent_dims, hidden_dims[0], kernel_size=4, stride=1),
             *starmap(self.block, zip(in_dims, hidden_dims[1:]))
         )
-
-        # Correct output shape
-        final_conv = shape_change_conv(self.main, in_size, out_size, latent_dims, out_channels)
         
         self.final_layer = nn.Sequential(
-            SelfAttention(hidden_dims[-1]),
-            final_conv,
+            # SelfAttention(hidden_dims[-1]),
             nn.Tanh()
         )
         
