@@ -14,9 +14,9 @@ dependencies:
   - nbdev
   - pillow
   - scrapy
-  - pytorch>=1.7.1
+  - pytorch>=1.8.1
   - torchvision
-  - fastai>=2.2.5
+  - fastai>=2.3.1
   - matplotlib
   - wandb
   - pip
