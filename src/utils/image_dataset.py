@@ -1,8 +1,10 @@
 from torch.utils.data import Dataset
-from PIL import Image
+from PIL import Image, ImageFile
 from os import walk
 from os.path import join
 from torch import randn
+
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 class ImageDataset(Dataset):
     def __init__(self, path="../data/superhero", max_images=None, transform=None, size=None, latent_vector=None):
